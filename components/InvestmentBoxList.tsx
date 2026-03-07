@@ -7,10 +7,10 @@ import InvestmentBoxModal from './InvestmentBoxModal';
 
 interface InvestmentBoxListProps {
     boxes: InvestmentBox[];
-    transactions: Transaction[];
     onDeleteBox: (id: string) => void;
     onUpdateBox?: (box: InvestmentBox) => Promise<void>;
     onCreateBox?: (box: Omit<InvestmentBox, 'id'>) => Promise<InvestmentBox | null>;
+    detailedBalances: Record<string, { patrimony: number; profit: number }>;
 }
 
 const BoxCard: React.FC<{ box: InvestmentBox; patrimony: number; profit: number; onDelete: () => void; onEdit: () => void }> = ({ box, patrimony, profit, onDelete, onEdit }) => {
@@ -77,72 +77,16 @@ const BoxCard: React.FC<{ box: InvestmentBox; patrimony: number; profit: number;
     );
 };
 
-const InvestmentBoxList: React.FC<InvestmentBoxListProps> = ({ boxes, transactions, onDeleteBox, onUpdateBox, onCreateBox }) => {
+const InvestmentBoxList: React.FC<InvestmentBoxListProps> = ({ boxes, onDeleteBox, onUpdateBox, onCreateBox, detailedBalances }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [boxToEdit, setBoxToEdit] = useState<InvestmentBox | null>(null);
-
-    const detailedBalances = useMemo(() => {
-        const result: Record<string, { patrimony: number; profit: number }> = {};
-
-        boxes.forEach(box => {
-            const boxTransactions = transactions.filter(t => t.investmentBoxId === box.id);
-            if (boxTransactions.length === 0) {
-                result[box.id] = { patrimony: 0, profit: 0 };
-                return;
-            }
-
-            const firstDate = boxTransactions.reduce((earliest, current) => 
-                current.date < earliest ? current.date : earliest, 
-                new Date()
-            );
-
-            const annualInterestRate = (box.interestRate || 0) / 100;
-            const dailyInterestRate = Math.pow(1 + annualInterestRate, 1 / 365) - 1;
-
-            const flowsByDate: Record<string, number> = {};
-            boxTransactions.forEach(t => {
-                const dateKey = new Date(t.date.getFullYear(), t.date.getMonth(), t.date.getDate()).toISOString().split('T')[0];
-                const amount = t.type === 'expense' ? t.amount : -t.amount;
-                flowsByDate[dateKey] = (flowsByDate[dateKey] || 0) + amount;
-            });
-            
-            let cursorDate = new Date(firstDate);
-            cursorDate.setHours(0, 0, 0, 0);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            let currentPatrimony = 0;
-            let currentPrincipal = 0;
-
-            while (cursorDate <= today) {
-                if (currentPatrimony > 0) {
-                    currentPatrimony *= (1 + dailyInterestRate);
-                }
-
-                const dateKey = cursorDate.toISOString().split('T')[0];
-                const dailyFlow = flowsByDate[dateKey] || 0;
-
-                currentPatrimony += dailyFlow;
-                currentPrincipal += dailyFlow;
-
-                cursorDate.setDate(cursorDate.getDate() + 1);
-            }
-            
-            result[box.id] = {
-                patrimony: currentPatrimony,
-                profit: currentPatrimony - currentPrincipal
-            };
-        });
-
-        return result;
-    }, [boxes, transactions]);
 
     const handleEdit = (box: InvestmentBox) => { setBoxToEdit(box); setIsModalOpen(true); };
     const handleCreate = () => { setBoxToEdit(null); setIsModalOpen(true); };
     const handleSaveBox = async (boxData: InvestmentBox | Omit<InvestmentBox, 'id'>) => { if ('id' in boxData && onUpdateBox) { await onUpdateBox(boxData); } else if (onCreateBox) { await onCreateBox(boxData as Omit<InvestmentBox, 'id'>); } };
 
     return (
-        <div className="h-full flex flex-col relative">
+        <div className="flex-1 flex flex-col relative min-h-0">
              <div className="mb-4 px-1 flex-shrink-0">
                 <button type="button" onClick={handleCreate} className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 font-semibold" >
                     <PlusIcon className="w-5 h-5" /> Nova Caixinha
@@ -152,7 +96,7 @@ const InvestmentBoxList: React.FC<InvestmentBoxListProps> = ({ boxes, transactio
              {boxes.length === 0 ? (
                  <div className="flex-grow flex flex-col items-center justify-center text-center p-4 opacity-60"> <p className="text-sm text-gray-500 dark:text-gray-400">Crie caixinhas para organizar seus investimentos.</p> </div>
              ) : (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 overflow-y-auto pr-2 pb-2 custom-scrollbar w-full">
+                <div className="flex-1 min-h-0 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 overflow-y-auto pr-2 pb-2 custom-scrollbar w-full">
                     {boxes.map(box => {
                         const data = detailedBalances[box.id] || { patrimony: 0, profit: 0 };
                         return (

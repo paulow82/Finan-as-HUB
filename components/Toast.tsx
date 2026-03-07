@@ -1,10 +1,11 @@
 
+
 import React, { useEffect, useState } from 'react';
 
 export interface ToastProps {
   id?: string;
   message: string;
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning';
   onDismiss: () => void;
 }
 
@@ -15,6 +16,9 @@ const icons = {
   error: (
     <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
   ),
+  warning: (
+    <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+  )
 };
 
 const Toast: React.FC<ToastProps> = ({ message, type, onDismiss }) => {
@@ -33,9 +37,11 @@ const Toast: React.FC<ToastProps> = ({ message, type, onDismiss }) => {
     setIsExiting(true);
     setTimeout(onDismiss, 500);
   };
+  
+  const borderColor = type === 'success' ? 'border-green-500' : type === 'error' ? 'border-red-500' : 'border-amber-500';
 
   return (
-    <div className={`flex items-start p-4 max-w-sm w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg border-l-4 ${type === 'success' ? 'border-green-500' : 'border-red-500'} ${isExiting ? 'animate-toast-out' : 'animate-toast-in'}`}>
+    <div className={`flex items-start p-4 max-w-sm w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg border-l-4 ${borderColor} ${isExiting ? 'animate-toast-out' : 'animate-toast-in'}`}>
       <div className="flex-shrink-0">{icons[type]}</div>
       <div className="ml-3 flex-1">
         <p className="text-sm font-medium text-gray-900 dark:text-white">{message}</p>

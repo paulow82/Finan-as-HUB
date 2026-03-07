@@ -1,44 +1,37 @@
 import React, { useMemo } from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Transaction } from '../../types';
 
 interface CategoryPieChartProps {
   transactions: Transaction[];
 }
 
-// FIX: Removed extra space from color hex code which would cause it to be invalid.
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6', '#f59e0b', '#6b7280'];
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
 
 const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ transactions }) => {
   const data = useMemo(() => {
-    // FIX: Refactored to use forEach to avoid complex type inference issues with `reduce`.
-    // This correctly types `expenseByCategory` and resolves downstream errors.
-    const expenseByCategory: Record<string, number> = {};
-    transactions
-      .filter(t => t.type === 'expense')
-      .forEach(transaction => {
-        const category = transaction.category;
-        if (!expenseByCategory[category]) {
-          expenseByCategory[category] = 0;
-        }
-        expenseByCategory[category] += transaction.amount;
-      });
+    const expenses = transactions.filter(t => t.type === 'expense');
+    const categoryMap = expenses.reduce((acc, t) => {
+      const category = t.category || 'Uncategorized';
+      acc[category] = (acc[category] || 0) + Number(t.amount);
+      return acc;
+    }, {} as Record<string, number>);
 
-    return Object.entries(expenseByCategory)
+    return Object.entries(categoryMap)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [transactions]);
 
   if (data.length === 0) {
     return (
-       <div className="h-full flex flex-col items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">Nenhuma despesa para exibir no gráfico.</p>
+      <div className="w-full h-[300px] flex items-center justify-center text-gray-400 text-sm">
+        No expense data available
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -46,17 +39,18 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ transactions }) => 
             cx="50%"
             cy="50%"
             labelLine={false}
-            outerRadius="80%"
+            outerRadius={100}
             fill="#8884d8"
             dataKey="value"
-            nameKey="name"
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip
-            formatter={(value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+          <Tooltip 
+            formatter={(value: number) => `R$ ${value.toFixed(2)}`}
+            contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '0.5rem', color: '#f3f4f6' }}
+            itemStyle={{ color: '#f3f4f6' }}
           />
           <Legend />
         </PieChart>

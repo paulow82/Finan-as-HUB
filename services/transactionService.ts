@@ -1,3 +1,6 @@
+
+
+
 import { supabase } from '../lib/supabaseClient';
 import { Transaction } from '../types';
 
@@ -7,7 +10,21 @@ const ATTACHMENT_BUCKET = 'attachments';
 const mapFromDb = (row: any): Transaction => {
   const date = new Date(row.date);
   // Validation to prevent app crashes from invalid dates in DB
-  const validDate = isNaN(date.getTime()) ? new Date() : date;
+  let validDate = isNaN(date.getTime()) ? new Date() : date;
+
+  // FIX: Adjust for timezone offset to prevent off-by-one errors.
+  // We assume the DB stores UTC dates (e.g., T00:00:00.000Z) that represent the user's intended "calendar date".
+  // When displayed in the browser's local time, these UTC dates can shift to the previous day (e.g., T00:00Z -> previous day 21:00 BRT).
+  // By adding the timezone offset, we shift the underlying UTC timestamp so that the "Local" representation matches the original "UTC" face value.
+  // Example: DB has 2023-01-01T00:00:00Z. Browser is UTC-3.
+  // Original read: Dec 31 21:00.
+  // Offset (UTC-3) is 180 mins (positive return from getTimezoneOffset in JS logic? No, JS returns positive for West).
+  // actually getTimezoneOffset() returns positive for West (e.g. 180 for UTC-3).
+  // validDate.getTime() + 180*60000 adds 3 hours.
+  // 00:00 UTC + 3h = 03:00 UTC.
+  // 03:00 UTC in UTC-3 is 00:00 Local.
+  // So we get "Jan 1 00:00 Local". Correct.
+  validDate = new Date(validDate.getTime() + validDate.getTimezoneOffset() * 60000);
 
   return {
     id: row.id,
@@ -24,6 +41,8 @@ const mapFromDb = (row: any): Transaction => {
     interestRate: row.interest_rate ? Number(row.interest_rate) : undefined,
     investmentBoxId: row.investment_box_id || undefined,
     attachmentUrl: row.attachment_url || undefined,
+    installmentsCurrent: row.installments_current || undefined,
+    installmentsTotal: row.installments_total || undefined,
   };
 };
 
@@ -42,6 +61,8 @@ const mapToDb = (t: Partial<Transaction>) => ({
   interest_rate: t.interestRate,
   investment_box_id: t.investmentBoxId,
   attachment_url: t.attachmentUrl || null,
+  installments_current: t.installmentsCurrent || null,
+  installments_total: t.installmentsTotal || null,
 });
 
 export const transactionService = {
@@ -75,56 +96,137 @@ export const transactionService = {
   },
 
   async update(transaction: Transaction, applyToFuture: boolean): Promise<void> {
+    // Primeiro, sempre atualiza a transação específica que está sendo editada.
     const dbData = mapToDb(transaction);
+    const { error: currentUpdateError } = await supabase
+      .from('transactions')
+      .update(dbData)
+      .eq('id', transaction.id);
+
+    if (currentUpdateError) {
+      console.error('Error updating current transaction:', currentUpdateError);
+      throw currentUpdateError;
+    }
     
+    // Se for uma transação recorrente e precisarmos aplicar as alterações às futuras...
     if (applyToFuture && transaction.recurrenceId) {
-      // Only update fields that are common for recurring transactions
-      const { error } = await supabase
+      // Busca todas as transações futuras na série.
+      const { data: futureTransactions, error: fetchFutureError } = await supabase
         .from('transactions')
-        .update({
-            description: dbData.description,
-            amount: dbData.amount,
-            category: dbData.category,
-            expense_type: dbData.expense_type,
-            income_type: dbData.income_type,
-            interest_rate: dbData.interest_rate,
-            investment_box_id: dbData.investment_box_id,
-        })
+        .select('*')
         .eq('recurrence_id', transaction.recurrenceId)
-        .gte('date', transaction.date.toISOString());
+        .gt('date', transaction.date.toISOString());
 
-       if (error) throw error;
-    } else {
-      const { error } = await supabase
-        .from('transactions')
-        .update(dbData)
-        .eq('id', transaction.id);
+      if (fetchFutureError) {
+        console.error('Error fetching future transactions:', fetchFutureError);
+        throw fetchFutureError;
+      }
 
-      if (error) throw error;
+      if (futureTransactions && futureTransactions.length > 0) {
+        const newDay = transaction.dueDate ? new Date(transaction.dueDate + 'T12:00:00').getDate() : new Date(transaction.date).getDate();
+
+        const updates = futureTransactions.map(t => {
+            const originalDate = new Date(t.date);
+            // Cria a nova data para a transação futura, preservando seu mês e ano, mas usando o novo dia.
+            const newDate = new Date(originalDate.getFullYear(), originalDate.getMonth(), newDay);
+
+            return {
+                id: t.id, // Importante para o upsert saber qual registro atualizar
+                description: transaction.description,
+                amount: transaction.amount,
+                type: transaction.type,
+                category: transaction.category,
+                date: newDate.toISOString(),
+                expense_type: transaction.expenseType,
+                income_type: transaction.incomeType,
+                // A data de vencimento é baseada na nova data
+                due_date: transaction.dueDate ? newDate.toISOString().split('T')[0] : null,
+                paid: t.type === 'expense' ? false : null, // Reseta o status de pago para contas futuras
+                recurrence_id: transaction.recurrenceId,
+                interest_rate: transaction.interestRate,
+                investment_box_id: transaction.investmentBoxId,
+                // O URL do anexo não é propagado para transações futuras
+                attachment_url: null,
+                // Mantém a contagem de parcelas original da transação futura se existir
+                installments_current: t.installments_current, 
+                installments_total: t.installments_total
+            };
+        });
+        
+        const { error: upsertError } = await supabase.from('transactions').upsert(updates);
+        if (upsertError) {
+          console.error('Error updating future transactions:', upsertError);
+          throw upsertError;
+        }
+      }
     }
   },
 
   async delete(id: string, recurrenceId?: string, applyToFuture?: boolean): Promise<void> {
     if (applyToFuture && recurrenceId) {
-        const { data: current } = await supabase.from('transactions').select('date').eq('id', id).single();
+      const { data: current, error: fetchError } = await supabase.from('transactions').select('date').eq('id', id).single();
+  
+      if (fetchError || !current) {
+        console.error("Could not fetch the transaction to be deleted.", fetchError);
+        // Fallback to deleting just the single item if we can't get its date
+        await this.delete(id); 
+        return;
+      }
+  
+      const { error: deleteError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('recurrence_id', recurrenceId)
+        .gte('date', current.date); // Deleta a atual e todas as futuras
+  
+      if (deleteError) {
+        console.error("Error deleting future transactions:", deleteError);
+        throw deleteError;
+      }
+  
+      // Após a exclusão, verifica se sobrou alguma transação órfã
+      const { count, error: countError } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('recurrence_id', recurrenceId);
+      
+      if (countError) {
+        console.error("Error counting remaining recurring items:", countError);
+        return; // A exclusão principal funcionou, então não lançamos erro.
+      }
+  
+      // Se sobrou exatamente uma, ela é a "mãe" que agora está sozinha.
+      if (count === 1) {
+        const { error: updateError } = await supabase
+          .from('transactions')
+          .update({ recurrence_id: null }) // Remove o ID de recorrência
+          .eq('recurrence_id', recurrenceId);
         
-        if (current) {
-            const { error } = await supabase
-                .from('transactions')
-                .delete()
-                .eq('recurrence_id', recurrenceId)
-                .gte('date', current.date);
-
-            if (error) throw error;
+        if (updateError) {
+          console.error("Error cleaning up orphaned recurring item:", updateError);
         }
+      }
+  
     } else {
+      // Exclusão de uma única transação
       const { error } = await supabase
         .from('transactions')
         .delete()
         .eq('id', id);
-
+  
       if (error) throw error;
     }
+  },
+
+  // Nova função: Deleta APENAS as futuras (estritamente maior que a data), preservando a atual
+  async deleteFutureTransactions(recurrenceId: string, afterDate: Date): Promise<void> {
+    const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('recurrence_id', recurrenceId)
+        .gt('date', afterDate.toISOString()); // gt = Greater Than (Estritamente maior que)
+
+    if (error) throw error;
   },
   
   async togglePaid(id: string, paid: boolean): Promise<void> {
@@ -202,7 +304,9 @@ export const transactionService = {
               date: validDate,
               dueDate: t.dueDate,
               recurrenceId: t.recurrenceId,
-              investmentBoxId: t.investmentBoxId
+              investmentBoxId: t.investmentBoxId,
+              installmentsCurrent: t.installmentsCurrent,
+              installmentsTotal: t.installmentsTotal
           });
       });
 

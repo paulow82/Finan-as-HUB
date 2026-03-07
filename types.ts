@@ -1,5 +1,9 @@
 
 
+
+
+
+
 export type TransactionType = 'income' | 'expense';
 export type ExpenseType = 'fixed' | 'variable' | 'investment' | 'leisure';
 export type IncomeType = 'fixed' | 'variable' | 'investment';
@@ -30,6 +34,8 @@ export interface Transaction {
   interestRate?: number; // Monthly interest rate for investments
   investmentBoxId?: string; // Vínculo com a caixinha
   attachmentUrl?: string; // URL do comprovante
+  installmentsCurrent?: number; // Número da parcela atual (ex: 1)
+  installmentsTotal?: number;   // Total de parcelas (ex: 12)
 }
 
 export type TransactionModalMode = 'income' | 'expense' | 'investment';
@@ -40,6 +46,7 @@ export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   investmentProjectionTimeframe: Timeframe;
   predictContributions: boolean;
+  manualContribution?: number; // Guarda o valor do aporte simulado
   budgetGoals: {
     fixed: number;
     variable: number;
@@ -59,4 +66,5 @@ export interface AppSettings {
       investment: string[];
     };
   };
+  transactionOrder?: Record<string, string[]>;
 }

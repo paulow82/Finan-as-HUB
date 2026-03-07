@@ -6,7 +6,7 @@ export interface UserPreferences {
   settings: AppSettings;
   layouts: any;
   cardColors: Record<string, string>;
-  cardTitles?: Record<string, string>; // Adicionado para salvar os títulos
+  cardTitles?: Record<string, string>;
 }
 
 export const settingsService = {
@@ -16,11 +16,10 @@ export const settingsService = {
       .from('app_settings')
       .select('settings') 
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      if (error.code === 'PGRST116') return null;
-      console.error('Erro ao buscar configurações:', JSON.stringify(error, null, 2));
+      console.warn('Erro ao buscar configurações:', error.message);
       return null;
     }
 
@@ -29,33 +28,41 @@ export const settingsService = {
 
   // Salva as preferências. Faz um "Upsert" (atualiza se existir, cria se não).
   async savePreferences(prefs: UserPreferences): Promise<void> {
-    const { data: existing, error: fetchError } = await supabase
-      .from('app_settings')
-      .select('id')
-      .limit(1)
-      .maybeSingle();
+    try {
+        const { data: existing, error: fetchError } = await supabase
+          .from('app_settings')
+          .select('id')
+          .limit(1)
+          .maybeSingle();
 
-    if (fetchError) {
-        console.error('Erro ao verificar configurações existentes:', JSON.stringify(fetchError, null, 2));
-        return;
-    }
+        if (fetchError) {
+            throw fetchError;
+        }
 
-    if (existing) {
-      const { error } = await supabase
-        .from('app_settings')
-        .update({ 
-            settings: prefs,
-            updated_at: new Date().toISOString()
-        })
-        .eq('id', existing.id);
+        if (existing) {
+          const { error } = await supabase
+            .from('app_settings')
+            .update({ 
+                settings: prefs,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', existing.id);
 
-      if (error) console.error('Erro ao atualizar configurações:', JSON.stringify(error, null, 2));
-    } else {
-      const { error } = await supabase
-        .from('app_settings')
-        .insert([{ settings: prefs }]);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('app_settings')
+            .insert([{ settings: prefs }]);
 
-      if (error) console.error('Erro ao criar configurações:', JSON.stringify(error, null, 2));
+          if (error) throw error;
+        }
+    } catch (error: any) {
+        // Se for erro de fetch (rede), apenas avisa, não explode o console
+        if (error.message && error.message.includes('Failed to fetch')) {
+             console.warn('Auto-save: Falha na conexão ao salvar configurações. Tentando novamente na próxima alteração.');
+        } else {
+             console.error('Erro ao salvar configurações:', error.message || error);
+        }
     }
   }
 };

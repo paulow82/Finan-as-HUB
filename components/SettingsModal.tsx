@@ -142,8 +142,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
   
   const handleRebalance = () => {
     const goals = currentSettings.budgetGoals;
-    // FIX: Explicitly typing the accumulator and value in `reduce` ensures correct type inference for `total`, preventing errors with arithmetic operations.
-    const total = Object.values(goals).reduce((sum: number, v: number) => sum + v, 0);
+    // FIX: Cast the result of Object.values() to number[] to ensure type safety in the reduce function, resolving errors with `unknown` types in arithmetic operations.
+    const total = (Object.values(goals) as number[]).reduce((sum, v) => sum + v, 0);
     
     if (total === 0 || total === 100) return;
 
@@ -201,8 +201,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
       }
   };
   
-  // FIX: Explicitly typing the accumulator and value in `reduce` ensures the result is a number and can be passed to `Math.round`.
-  const totalBudget = Math.round(Object.values(currentSettings.budgetGoals).reduce((sum: number, v: number) => sum + v, 0));
+  // FIX: Cast the result of Object.values() to number[] to ensure type safety. This resolves errors where `reduce` returns `unknown`, which cannot be passed to Math.round or used in addition.
+  const totalBudget = Math.round((Object.values(currentSettings.budgetGoals) as number[]).reduce((sum, v) => sum + v, 0));
 
   const inputBaseClasses = "mt-1 block w-full h-12 px-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400 text-base transition-shadow shadow-sm";
 

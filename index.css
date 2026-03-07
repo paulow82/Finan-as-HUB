@@ -1,0 +1,68 @@
+body { background-color: #f9fafb; }
+.dark body { background-color: #111827; }
+
+/* Estilos essenciais para React Grid Layout */
+.react-grid-layout { position: relative; transition: height 200ms ease; }
+.react-grid-item { transition: all 200ms ease; transition-property: left, top; }
+.react-grid-item.cssTransforms { transition-property: transform; }
+.react-grid-item.resizing { z-index: 100; will-change: width, height; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+.react-grid-item.react-draggable-dragging { transition: none; z-index: 100; will-change: transform; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+.react-grid-item.react-grid-placeholder { background: #3b82f6; opacity: 0.2; transition-duration: 100ms; z-index: 2; user-select: none; border-radius: 0.5rem; }
+
+/* Estilos dos manipuladores de redimensionamento */
+.react-grid-item > .react-resizable-handle { 
+    position: absolute; 
+    width: 20px; 
+    height: 20px; 
+    bottom: 0; 
+    z-index: 10;
+    opacity: 0; /* Oculto por padrão */
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Mostra os manipuladores ao passar o mouse no card ou quando estiver redimensionando */
+.react-grid-item:hover > .react-resizable-handle,
+.react-grid-item.resizing > .react-resizable-handle {
+    opacity: 1;
+}
+
+/* Canto Inferior Direito (Padrão) */
+.react-grid-item > .react-resizable-handle-se { 
+    right: 0; 
+    cursor: se-resize;
+    /* Indicador visual discreto (triângulo no canto) */
+    background: linear-gradient(135deg, transparent 80%, rgba(156, 163, 175, 0.6) 80%);
+    border-bottom-right-radius: 0.5rem; /* Arredonda junto com o card */
+}
+
+/* Canto Inferior Esquerdo (Novo) */
+.react-grid-item > .react-resizable-handle-sw { 
+    left: 0; 
+    cursor: sw-resize; 
+    /* Indicador visual discreto espelhado */
+    background: linear-gradient(225deg, transparent 80%, rgba(156, 163, 175, 0.6) 80%);
+    border-bottom-left-radius: 0.5rem; /* Arredonda junto com o card */
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.3); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background-color: rgba(107, 114, 128, 0.6); }
+.dark ::-webkit-scrollbar-thumb { background-color: rgba(75, 85, 99, 0.3); }
+.dark ::-webkit-scrollbar-thumb:hover { background-color: rgba(107, 114, 128, 0.6); }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Recharts Overrides - Force Visibility */
+.recharts-wrapper, .recharts-surface { width: 100% !important; height: 100% !important; }
+.recharts-surface { overflow: visible !important; }
+svg.recharts-surface { display: block !important; }
+
+/* Recharts Path Fill Fixes */
+.recharts-pie-sector path { fill: inherit !important; }
+.recharts-sector path { fill: inherit !important; }
+
+/* Force Recharts pie to be visible */
+.recharts-layer path { opacity: 1 !important; }
+.recharts-pie-sector path { fill: inherit !important; stroke: none !important; }
+.recharts-sector path { fill: inherit !important; stroke: none !important; }

@@ -69,6 +69,18 @@ export const investmentService = {
     },
 
     async deleteBox(id: string): Promise<void> {
+        // Passo 1: Desvincular transações associadas para evitar dados órfãos.
+        const { error: updateError } = await supabase
+            .from('transactions')
+            .update({ investment_box_id: null })
+            .eq('investment_box_id', id);
+        
+        if (updateError) {
+            console.error('Error unlinking transactions from box:', updateError);
+            throw updateError;
+        }
+
+        // Passo 2: Excluir a caixinha.
         const { error } = await supabase
             .from('investment_boxes')
             .delete()
@@ -78,6 +90,5 @@ export const investmentService = {
             console.error('Error deleting box:', error);
             throw error; 
         }
-        // Nenhuma checagem extra de retorno. Se não houve erro, assumimos sucesso.
     }
 };

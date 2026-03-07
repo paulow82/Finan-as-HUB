@@ -33,7 +33,7 @@ const TransactionItem: React.FC<{ transaction: Transaction }> = ({ transaction }
 
 const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex-1 min-h-0 flex flex-col">
       {transactions.length > 0 ? (
         <ul className="divide-y divide-gray-200 dark:divide-gray-700 overflow-y-auto flex-grow">
           {transactions.map(t => <TransactionItem key={t.id} transaction={t} />)}

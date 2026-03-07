@@ -1,11 +1,14 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard de Controle Financeiro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Dashboard Financeiro</title>
+
+    <!-- 1. Babel para transpilação de JSX/TSX no navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 2. Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -13,69 +16,59 @@
         theme: {
           extend: {
             colors: {
-              'primary': '#3b82f6',
-              'success': '#22c55e',
-              'danger': '#ef4444',
-            },
-            keyframes: {
-              'toast-in': {
-                'from': { transform: 'translateX(100%)', opacity: '0' },
-                'to': { transform: 'translateX(0)', opacity: '1' },
-              },
-              'toast-out': {
-                'from': { transform: 'translateX(0)', opacity: '1' },
-                'to': { transform: 'translateX(100%)', opacity: '0' },
-              },
-              'fade-in': {
-                'from': { opacity: '0', transform: 'translateY(-10px)' },
-                'to': { opacity: '1', transform: 'translateY(0)' },
-              },
+              primary: '#3b82f6',
+              success: '#10b981',
+              danger: '#ef4444',
             },
             animation: {
               'toast-in': 'toast-in 0.5s ease-out forwards',
               'toast-out': 'toast-out 0.5s ease-in forwards',
               'fade-in': 'fade-in 0.3s ease-out forwards',
             },
+            keyframes: {
+              'toast-in': { '0%': { transform: 'translateX(100%)', opacity: '0' }, '100%': { transform: 'translateX(0)', opacity: '1' } },
+              'toast-out': { '0%': { transform: 'translateX(0)', opacity: '1' }, '100%': { transform: 'translateX(100%)', opacity: '0' } },
+              'fade-in': { '0%': { opacity: '0', transform: 'translateY(-10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+            }
           }
         }
       }
     </script>
-    <style>
-      .react-grid-layout { position: relative; transition: height 200ms ease; }
-      .react-grid-item { transition: all 200ms ease; transition-property: left, top; }
-      .react-grid-item.cssTransforms { transition-property: transform; }
-      .react-grid-item.resizing { z-index: 1; will-change: width, height; }
-      .react-grid-item.react-draggable-dragging { transition: none; z-index: 3; will-change: transform; }
-      .react-grid-item.react-grid-placeholder { background: #3b82f6; opacity: 0.2; transition-duration: 100ms; z-index: 2; user-select: none; }
-      .react-grid-item > .react-resizable-handle { position: absolute; width: 20px; height: 20px; bottom: 0; right: 0; cursor: se-resize; }
-      .react-grid-item > .react-resizable-handle::after { content: ""; position: absolute; right: 3px; bottom: 3px; width: 5px; height: 5px; border-right: 2px solid rgba(0, 0, 0, 0.4); border-bottom: 2px solid rgba(0, 0, 0, 0.4); }
-      .dark .react-grid-item > .react-resizable-handle::after { border-right: 2px solid rgba(209, 213, 219, 0.4); border-bottom: 2px solid rgba(209, 213, 219, 0.4); }
-      ::-webkit-scrollbar { width: 8px; height: 8px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background-color: rgba(107, 114, 128, 0.5); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
-      ::-webkit-scrollbar-thumb:hover { background-color: rgba(107, 114, 128, 0.7); }
-      .dark ::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); }
-      .dark ::-webkit-scrollbar-thumb:hover { background-color: rgba(156, 163, 175, 0.7); }
-      .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
-    </style>
-  <script type="importmap">
+    
+    <!-- 3. Estilos de bibliotecas via CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/react-grid-layout/css/styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/react-resizable/css/styles.css" />
+
+    <!-- 4. Estilos personalizados locais -->
+    <link rel="stylesheet" href="./index.css" />
+
+    <!-- 5. Import Map para resolver dependências de JS -->
+    <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "recharts": "https://aistudiocdn.com/recharts@^3.4.1",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-grid-layout": "https://aistudiocdn.com/react-grid-layout@^1.4.4",
-    "react-grid-layout/": "https://aistudiocdn.com/react-grid-layout@^1.4.4/",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0"
+    "react": "https://esm.sh/react@18.2.0?dev",
+    "react-dom": "https://esm.sh/react-dom@18.2.0?dev",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev",
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?dev",
+    "react/jsx-dev-runtime": "https://esm.sh/react@18.2.0/jsx-dev-runtime?dev",
+    "react-grid-layout": "https://esm.sh/react-grid-layout@1.4.4?external=react,react-dom",
+    "recharts": "https://esm.sh/recharts@2.12.7?external=react,react-dom",
+    "@hello-pangea/dnd": "https://esm.sh/@hello-pangea/dnd@16.6.0?external=react,react-dom",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.43.4",
+    "lucide-react": "https://esm.sh/lucide-react@0.395.0?external=react",
+    "date-fns": "https://esm.sh/date-fns@3.6.0",
+    "clsx": "https://esm.sh/clsx@2.1.0",
+    "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1"
   }
 }
 </script>
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-gray-50 dark:bg-gray-900">
+  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     <div id="root"></div>
     <div id="toast-container" class="fixed top-5 right-5 z-[10000] space-y-3"></div>
+    
+    <!-- 6. Ponto de entrada da aplicação -->
     <script type="module" src="/index.tsx"></script>
-  </body>
+</body>
 </html>
