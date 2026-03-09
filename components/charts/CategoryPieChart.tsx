@@ -52,7 +52,13 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ transactions }) => 
             contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '0.5rem', color: '#f3f4f6' }}
             itemStyle={{ color: '#f3f4f6' }}
           />
-          <Legend />
+          <Legend 
+            layout="horizontal" 
+            verticalAlign="bottom" 
+            align="center"
+            iconType="circle"
+            formatter={(value) => <span className="text-gray-600 dark:text-gray-300 font-medium ml-1 text-xs">{value}</span>}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

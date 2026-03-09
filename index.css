@@ -52,17 +52,3 @@ body { background-color: #f9fafb; }
 .dark ::-webkit-scrollbar-thumb { background-color: rgba(75, 85, 99, 0.3); }
 .dark ::-webkit-scrollbar-thumb:hover { background-color: rgba(107, 114, 128, 0.6); }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
-
-/* Recharts Overrides - Force Visibility */
-.recharts-wrapper, .recharts-surface { width: 100% !important; height: 100% !important; }
-.recharts-surface { overflow: visible !important; }
-svg.recharts-surface { display: block !important; }
-
-/* Recharts Path Fill Fixes */
-.recharts-pie-sector path { fill: inherit !important; }
-.recharts-sector path { fill: inherit !important; }
-
-/* Force Recharts pie to be visible */
-.recharts-layer path { opacity: 1 !important; }
-.recharts-pie-sector path { fill: inherit !important; stroke: none !important; }
-.recharts-sector path { fill: inherit !important; stroke: none !important; }

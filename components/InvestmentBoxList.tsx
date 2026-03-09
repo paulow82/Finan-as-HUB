@@ -24,7 +24,7 @@ const BoxCard: React.FC<{ box: InvestmentBox; patrimony: number; profit: number;
     const handleEditClick = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); onEdit(); };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 relative group transition-all hover:shadow-lg hover:border-primary/30 flex flex-col justify-between h-full min-h-[150px] animate-fade-in">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 relative group transition-all hover:shadow-lg hover:border-primary/30 flex flex-col justify-between min-h-[160px] animate-fade-in">
             <div>
                 <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2 min-w-0 overflow-hidden">
@@ -39,30 +39,26 @@ const BoxCard: React.FC<{ box: InvestmentBox; patrimony: number; profit: number;
                 
                 <div className="mb-4">
                     <p className="text-2xl font-bold text-gray-900 dark:text-white truncate" title={formattedPatrimony}>{formattedPatrimony}</p>
-                    <div className="flex flex-wrap gap-2 text-xs mt-1">
-                        {(box.interestRate || profit > 0.005) && (
-                            <div className="inline-flex items-center text-xs font-medium border rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                                {box.interestRate && (
-                                    <span className="px-2 py-0.5 text-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                        +{box.interestRate}% a.a.
-                                    </span>
-                                )}
-                                {profit > 0.005 && (
-                                     <span className="px-2 py-0.5 text-gray-600 dark:text-gray-300">
-                                        + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profit)} (Juros)
-                                    </span>
-                                )}
-                            </div>
-                        )}
+                    <div className="flex flex-wrap gap-1.5 text-xs mt-1.5">
+                        {box.interestRate ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded border font-medium text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50">
+                                +{box.interestRate}% a.a.
+                            </span>
+                        ) : null}
+                        {profit > 0.005 ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded border font-medium text-gray-600 bg-gray-100 border-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600">
+                                + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profit)} (Juros)
+                            </span>
+                        ) : null}
                     </div>
                 </div>
             </div>
 
             {box.targetAmount && box.targetAmount > 0 ? (
                 <div className="mt-auto">
-                    <div className="flex justify-between items-end text-xs mb-1.5">
-                        <span className="text-gray-500 dark:text-gray-400">Meta: {formattedTarget}</span>
-                        <span className="font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs border border-gray-200 dark:border-gray-600"> {percentageDisplay}% </span>
+                    <div className="flex justify-between items-end text-xs mb-1.5 gap-2">
+                        <span className="text-gray-500 dark:text-gray-400 truncate" title={`Meta: ${formattedTarget}`}>Meta: {formattedTarget}</span>
+                        <span className="font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs border border-gray-200 dark:border-gray-600 flex-shrink-0"> {percentageDisplay}% </span>
                     </div>
                     <div className="w-full bg-gray-100 dark:bg-gray-900 rounded-full h-2.5 overflow-hidden border border-gray-200 dark:border-gray-700">
                         <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${progress}%`, backgroundColor: box.color || '#10b981' }} ></div>
@@ -96,7 +92,7 @@ const InvestmentBoxList: React.FC<InvestmentBoxListProps> = ({ boxes, onDeleteBo
              {boxes.length === 0 ? (
                  <div className="flex-grow flex flex-col items-center justify-center text-center p-4 opacity-60"> <p className="text-sm text-gray-500 dark:text-gray-400">Crie caixinhas para organizar seus investimentos.</p> </div>
              ) : (
-                <div className="flex-1 min-h-0 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 overflow-y-auto pr-2 pb-2 custom-scrollbar w-full">
+                <div className="flex-1 min-h-0 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] auto-rows-max gap-4 overflow-y-auto pr-2 pb-2 custom-scrollbar w-full">
                     {boxes.map(box => {
                         const data = detailedBalances[box.id] || { patrimony: 0, profit: 0 };
                         return (
