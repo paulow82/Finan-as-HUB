@@ -145,7 +145,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({ title, children, cardKey,
                     </div>
                 </div>
             </div>
-            <div className={`p-2 sm:p-6 sm:pb-8 ${isAutoHeight ? '' : 'flex-grow min-h-0 flex flex-col'}`}>
+            <div className={`p-2 sm:p-6 sm:pb-8 overflow-hidden ${isAutoHeight ? '' : 'flex-grow min-h-0 flex flex-col'}`}>
                 {children}
             </div>
         </div>

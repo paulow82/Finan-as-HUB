@@ -92,7 +92,7 @@ const InvestmentBoxList: React.FC<InvestmentBoxListProps> = ({ boxes, onDeleteBo
              {boxes.length === 0 ? (
                  <div className="flex-grow flex flex-col items-center justify-center text-center p-4 opacity-60"> <p className="text-sm text-gray-500 dark:text-gray-400">Crie caixinhas para organizar seus investimentos.</p> </div>
              ) : (
-                <div className="flex-1 min-h-0 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] auto-rows-max gap-4 overflow-y-auto pr-2 pb-2 custom-scrollbar w-full">
+                <div className="flex-1 min-h-0 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] auto-rows-max gap-4 overflow-y-auto overflow-x-hidden pr-2 pb-2 custom-scrollbar w-full">
                     {boxes.map(box => {
                         const data = detailedBalances[box.id] || { patrimony: 0, profit: 0 };
                         return (

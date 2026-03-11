@@ -163,7 +163,7 @@ const InvestmentProjections: React.FC<InvestmentProjectionsProps> = ({ allTransa
         const flowsByDate: Record<string, number> = {};
         transactions.forEach(t => {
             const tDate = new Date(t.date);
-            const dateKey = new Date(tDate.getFullYear(), tDate.getMonth(), tDate.getDate()).toISOString().split('T')[0];
+            const dateKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}-${String(tDate.getDate()).padStart(2, '0')}`;
             const amount = t.type === 'expense' ? t.amount : -t.amount;
             flowsByDate[dateKey] = (flowsByDate[dateKey] || 0) + amount;
         });
@@ -185,15 +185,10 @@ const InvestmentProjections: React.FC<InvestmentProjectionsProps> = ({ allTransa
 
         while (cursorDate <= globalEndDate) {
             const timestamp = cursorDate.getTime();
-            const dateKey = cursorDate.toISOString().split('T')[0];
+            const dateKey = `${cursorDate.getFullYear()}-${String(cursorDate.getMonth() + 1).padStart(2, '0')}-${String(cursorDate.getDate()).padStart(2, '0')}`;
             const isFuture = cursorDate > today;
             
-            if (currentPatrimony > 0) {
-                const dailyInterest = currentPatrimony * dailyInterestRate;
-                accumulatedProfit += dailyInterest;
-                currentPatrimony += dailyInterest;
-            }
-
+            // Aplica Movimentações do dia
             let dailyFlow = flowsByDate[dateKey] || 0;
             
             if (isFuture && predictContributions && cursorDate.getDate() === 1) {
@@ -211,6 +206,13 @@ const InvestmentProjections: React.FC<InvestmentProjectionsProps> = ({ allTransa
                 accumulatedProfit -= withdrawnFromProfit;
             }
             currentPatrimony += dailyFlow;
+
+            // Aplica Juros (Sobre o saldo do dia, incluindo movimentações)
+            if (currentPatrimony > 0) {
+                const dailyInterest = currentPatrimony * dailyInterestRate;
+                accumulatedProfit += dailyInterest;
+                currentPatrimony += dailyInterest;
+            }
 
             const existing = dailyAggregator.get(timestamp) || { patrimony: 0, principal: 0, dailyMovement: 0 };
             dailyAggregator.set(timestamp, {

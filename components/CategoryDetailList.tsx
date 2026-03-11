@@ -209,7 +209,7 @@ const CategoryDetailList: React.FC<CategoryDetailListProps> = ({ transactions, i
         <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId={listKey} ignoreContainerClipping={true}>
                 {(provided) => (
-                    <ul {...provided.droppableProps} ref={provided.innerRef} className="divide-y divide-gray-200 dark:divide-gray-700 overflow-y-auto flex-grow -mr-3 pr-2 custom-scrollbar min-h-0">
+                    <ul {...provided.droppableProps} ref={provided.innerRef} className="divide-y divide-gray-200 dark:divide-gray-700 overflow-y-auto overflow-x-hidden flex-grow custom-scrollbar min-h-0">
                         {items.map((t, index) => (
                             <Draggable key={t.id} draggableId={t.id} index={index}>
                                 {(provided, snapshot) => {

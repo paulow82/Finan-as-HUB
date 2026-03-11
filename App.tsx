@@ -289,22 +289,15 @@ const DashboardContent: React.FC = () => {
             const txMap: Record<string, Transaction[]> = {};
             boxTxs.forEach(t => {
                 const tDate = new Date(t.date);
-                const d = new Date(tDate);
-                d.setHours(0, 0, 0, 0);
-                const key = d.toISOString().split('T')[0];
+                const key = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}-${String(tDate.getDate()).padStart(2, '0')}`;
                 if (!txMap[key]) txMap[key] = [];
                 txMap[key].push(t);
             });
 
             // Loop dia a dia até hoje
             while (cursorDate <= today) {
-                const dateKey = cursorDate.toISOString().split('T')[0];
+                const dateKey = `${cursorDate.getFullYear()}-${String(cursorDate.getMonth() + 1).padStart(2, '0')}-${String(cursorDate.getDate()).padStart(2, '0')}`;
                 
-                // Aplica Juros (Sobre o saldo do dia anterior)
-                if (currentBalance > 0) {
-                    currentBalance += currentBalance * dailyRate;
-                }
-
                 // Aplica Movimentações do dia
                 if (txMap[dateKey]) {
                     txMap[dateKey].forEach(t => {
@@ -316,6 +309,11 @@ const DashboardContent: React.FC = () => {
                             totalPrincipal -= t.amount; 
                         }
                     });
+                }
+
+                // Aplica Juros (Sobre o saldo do dia, incluindo movimentações)
+                if (currentBalance > 0) {
+                    currentBalance += currentBalance * dailyRate;
                 }
 
                 cursorDate.setDate(cursorDate.getDate() + 1);
@@ -396,7 +394,7 @@ const DashboardContent: React.FC = () => {
             }
             
             const isInstallment = baseTransaction.installmentsTotal && baseTransaction.installmentsTotal > 1;
-    
+            let createdTransactions: Transaction[] = [];
             if (isInstallment || isRecurring) {
                 const recurrenceId = crypto.randomUUID();
                 const transactionsToCreate = [];
@@ -415,7 +413,7 @@ const DashboardContent: React.FC = () => {
                     if (baseTransaction.dueDate) {
                         const d = new Date(baseTransaction.dueDate + 'T12:00:00Z');
                         d.setMonth(d.getMonth() + i);
-                        nextDueDate = d.toISOString().split('T')[0];
+                        nextDueDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                     }
     
                     transactionsToCreate.push({
@@ -428,13 +426,12 @@ const DashboardContent: React.FC = () => {
                         attachmentUrl: i === 0 ? attachmentUrl : undefined
                     });
                 }
-                await transactionService.create(transactionsToCreate);
+                createdTransactions = await transactionService.create(transactionsToCreate);
             } else {
-                await transactionService.create([baseTransaction]);
+                createdTransactions = await transactionService.create([baseTransaction]);
             }
     
-            const updated = await transactionService.fetchAll();
-            setTransactions(updated);
+            setTransactions(prev => [...prev, ...createdTransactions]);
             addToast({ message: "Transação salva!", type: "success" });
         } catch (error) { console.error(error); addToast({ message: "Erro ao salvar.", type: "error" }); } finally { setIsMutating(false); setIsAddModalOpen(false); }
     };
@@ -469,7 +466,7 @@ const DashboardContent: React.FC = () => {
                     if (finalTransaction.dueDate) {
                         const d = new Date(finalTransaction.dueDate + 'T12:00:00Z');
                         d.setMonth(d.getMonth() + monthOffset);
-                        nextDueDate = d.toISOString().split('T')[0];
+                        nextDueDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                     }
     
                     transactionsToCreate.push({
@@ -501,7 +498,7 @@ const DashboardContent: React.FC = () => {
                         if (updatedWithRecurrence.dueDate) {
                             const d = new Date(updatedWithRecurrence.dueDate + 'T12:00:00Z');
                             d.setMonth(d.getMonth() + i);
-                            nextDueDate = d.toISOString().split('T')[0];
+                            nextDueDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                         }
                         transactionsToCreate.push({ ...updatedWithRecurrence, date: nextDate, dueDate: nextDueDate, paid: false, attachmentUrl: undefined, id: crypto.randomUUID() });
                     }
@@ -574,7 +571,7 @@ const DashboardContent: React.FC = () => {
                 if (t.dueDate) {
                     const d = new Date(t.dueDate + 'T12:00:00Z'); 
                     d.setMonth(d.getMonth() + 1);
-                    newDueDate = d.toISOString().split('T')[0];
+                    newDueDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 }
 
                 const { id, ...rest } = t; 

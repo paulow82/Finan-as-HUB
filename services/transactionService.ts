@@ -12,20 +12,6 @@ const mapFromDb = (row: any): Transaction => {
   // Validation to prevent app crashes from invalid dates in DB
   let validDate = isNaN(date.getTime()) ? new Date() : date;
 
-  // FIX: Adjust for timezone offset to prevent off-by-one errors.
-  // We assume the DB stores UTC dates (e.g., T00:00:00.000Z) that represent the user's intended "calendar date".
-  // When displayed in the browser's local time, these UTC dates can shift to the previous day (e.g., T00:00Z -> previous day 21:00 BRT).
-  // By adding the timezone offset, we shift the underlying UTC timestamp so that the "Local" representation matches the original "UTC" face value.
-  // Example: DB has 2023-01-01T00:00:00Z. Browser is UTC-3.
-  // Original read: Dec 31 21:00.
-  // Offset (UTC-3) is 180 mins (positive return from getTimezoneOffset in JS logic? No, JS returns positive for West).
-  // actually getTimezoneOffset() returns positive for West (e.g. 180 for UTC-3).
-  // validDate.getTime() + 180*60000 adds 3 hours.
-  // 00:00 UTC + 3h = 03:00 UTC.
-  // 03:00 UTC in UTC-3 is 00:00 Local.
-  // So we get "Jan 1 00:00 Local". Correct.
-  validDate = new Date(validDate.getTime() + validDate.getTimezoneOffset() * 60000);
-
   return {
     id: row.id,
     description: row.description,
@@ -128,7 +114,8 @@ export const transactionService = {
         const updates = futureTransactions.map(t => {
             const originalDate = new Date(t.date);
             // Cria a nova data para a transação futura, preservando seu mês e ano, mas usando o novo dia.
-            const newDate = new Date(originalDate.getFullYear(), originalDate.getMonth(), newDay);
+            // Para evitar problemas de fuso horário, criamos a data ao meio-dia UTC
+            const newDate = new Date(Date.UTC(originalDate.getFullYear(), originalDate.getMonth(), newDay, 12, 0, 0));
 
             return {
                 id: t.id, // Importante para o upsert saber qual registro atualizar
@@ -140,7 +127,7 @@ export const transactionService = {
                 expense_type: transaction.expenseType,
                 income_type: transaction.incomeType,
                 // A data de vencimento é baseada na nova data
-                due_date: transaction.dueDate ? newDate.toISOString().split('T')[0] : null,
+                due_date: transaction.dueDate ? `${newDate.getUTCFullYear()}-${String(newDate.getUTCMonth() + 1).padStart(2, '0')}-${String(newDate.getUTCDate()).padStart(2, '0')}` : null,
                 paid: t.type === 'expense' ? false : null, // Reseta o status de pago para contas futuras
                 recurrence_id: transaction.recurrenceId,
                 interest_rate: transaction.interestRate,
