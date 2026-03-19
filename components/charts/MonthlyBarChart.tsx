@@ -148,9 +148,13 @@ const MonthlyBarChart: React.FC<MonthlyBarChartProps> = ({ transactions, selecte
             // Atualiza Fluxo de Caixa (Barras) - Apenas se estiver dentro da janela de visualização (12 meses)
             if (cursorDate >= viewStartDate) {
                 if (t.type === 'income') {
-                    monthlyDataMap[monthKey].income += t.amount;
+                    if (t.incomeType !== 'investment') {
+                        monthlyDataMap[monthKey].income += t.amount;
+                    }
                 } else {
-                    monthlyDataMap[monthKey].expense += t.amount;
+                    if (t.expenseType !== 'investment') {
+                        monthlyDataMap[monthKey].expense += t.amount;
+                    }
                 }
             }
         });

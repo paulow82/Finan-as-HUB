@@ -10,7 +10,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ transactions }) => {
   const data = useMemo(() => {
-    const expenses = transactions.filter(t => t.type === 'expense');
+    const expenses = transactions.filter(t => t.type === 'expense' && t.expenseType !== 'investment');
     const categoryMap = expenses.reduce((acc, t) => {
       const category = t.category || 'Uncategorized';
       acc[category] = (acc[category] || 0) + Number(t.amount);

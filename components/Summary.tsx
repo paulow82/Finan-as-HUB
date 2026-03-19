@@ -11,6 +11,8 @@ interface SummaryProps {
   totalIncome: number;
   totalExpenses: number;
   totalInvested: number;
+  investmentContributions: number;
+  investmentWithdrawals: number;
   balance: number;
   pendingExpenses: number;
   nextBill?: Transaction;
@@ -125,7 +127,7 @@ const NextBillCard: React.FC<{ bill?: Transaction; isSticky?: boolean; compact?:
 };
 
 
-const Summary: React.FC<SummaryProps> = ({ totalIncome, totalExpenses, totalInvested, balance, nextBill, pendingExpenses, overdueBills, isSticky, mobileView }) => {
+const Summary: React.FC<SummaryProps> = ({ totalIncome, totalExpenses, totalInvested, investmentContributions, investmentWithdrawals, balance, nextBill, pendingExpenses, overdueBills, isSticky, mobileView }) => {
   const balanceColorClass = balance >= 0 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400';
   const totalOverdue = overdueBills.reduce((sum, bill) => sum + bill.amount, 0);
   const overdueCount = overdueBills.length;
@@ -196,7 +198,7 @@ const Summary: React.FC<SummaryProps> = ({ totalIncome, totalExpenses, totalInve
               <SummaryCard 
                 title="Investido" 
                 amount={totalInvested} 
-                subtitle="Aportes"
+                subtitle="Saldo Mês"
                 icon={<TrendingUpIcon />}
                 colorClass="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
                 compact={true}
@@ -258,7 +260,7 @@ const Summary: React.FC<SummaryProps> = ({ totalIncome, totalExpenses, totalInve
       <SummaryCard 
         title="Investido" 
         amount={totalInvested} 
-        subtitle="Aportes do mês"
+        subtitle={`Aportes: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(investmentContributions)} | Resgates: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(investmentWithdrawals)}`}
         icon={<DollarSignIcon />}
         colorClass="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
         isSticky={isSticky}

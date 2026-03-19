@@ -219,30 +219,39 @@ const DashboardContent: React.FC = () => {
     const summaryData = useMemo(() => {
         let income = 0;
         let expenses = 0;
-        let invested = 0;
+        let investmentContributions = 0;
+        let investmentWithdrawals = 0;
         let pendingExpenses = 0;
 
         filteredTransactions.forEach(t => {
             if (t.type === 'income') {
-                income += t.amount;
+                if (t.incomeType === 'investment') {
+                    investmentWithdrawals += t.amount;
+                } else {
+                    income += t.amount;
+                }
             } else {
                 if (t.expenseType === 'investment') {
-                    invested += t.amount;
+                    investmentContributions += t.amount;
                 } else {
                     expenses += t.amount;
-                }
-                
-                if (!t.paid && t.dueDate) {
-                     pendingExpenses += t.amount;
+                    
+                    if (!t.paid && t.dueDate) {
+                         pendingExpenses += t.amount;
+                    }
                 }
             }
         });
 
+        const netInvested = investmentContributions - investmentWithdrawals;
+
         return { 
             totalIncome: income, 
             totalExpenses: expenses, 
-            totalInvested: invested, 
-            balance: income - expenses - invested,
+            totalInvested: netInvested, 
+            investmentContributions,
+            investmentWithdrawals,
+            balance: income - expenses - netInvested,
             pendingExpenses
         };
     }, [filteredTransactions]);

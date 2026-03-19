@@ -135,9 +135,13 @@ const MonthlySummarySidebar: React.FC<MonthlySummarySidebarProps> = ({ allTransa
         }
 
         if (t.type === 'income') {
-          summaries[key].income += t.amount;
+          if (t.incomeType !== 'investment') {
+            summaries[key].income += t.amount;
+          }
         } else {
-          summaries[key].expense += t.amount;
+          if (t.expenseType !== 'investment') {
+            summaries[key].expense += t.amount;
+          }
         }
         summaries[key].balance = summaries[key].income - summaries[key].expense;
       });
@@ -155,7 +159,11 @@ const MonthlySummarySidebar: React.FC<MonthlySummarySidebarProps> = ({ allTransa
       })
       .forEach(t => {
         if (t.type === 'income') {
-          summary.income += t.amount;
+          if (t.incomeType === 'investment') {
+            summary.investment -= t.amount;
+          } else {
+            summary.income += t.amount;
+          }
         } else if (t.type === 'expense') {
           if (t.expenseType === 'investment') {
             summary.investment += t.amount;
